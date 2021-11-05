@@ -7,6 +7,9 @@ public interface VenusSpringDataRedisConsts {
 	public static final Long VENUS_JEDIS_POOL_HC_DELAY = 1000L;
 	public static final Long VENUS_JEDIS_POOL_HC_INTERVAL = 5000L;
 	
+	public static final Long VENUS_JEDIS_POOL_METRICS_DELAY = 15000L;
+	public static final Long VENUS_JEDIS_POOL_METRICS_INTERVAL = 15000L;
+	
 	public static final String VENUS_JEDIS_CTRL_URL_TEST_HC = "http://test-mw-governance-service.int.chuxingyouhui.com/config/redis/report";
 	public static final String VENUS_JEDIS_CTRL_URL_PROD_HC_EVN_VAR = "VENUS_JEDIS_CTRL_URL_PROD_HC_EVN_VAR";
 	

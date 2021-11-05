@@ -29,6 +29,7 @@ import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.connection.convert.Converters;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.venus.keys.VenusSlowKeys;
+import org.springframework.data.redis.venus.metrics.VenusSpringDataRedisMetrics;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -60,6 +61,8 @@ class JedisStringCommands implements RedisStringCommands {
 		if (value != null) {
 			VenusSlowKeys.getInstance().checkIfBigKeys(connection.getClientName() , new String(key) , value.length);
 		}
+		
+		VenusSpringDataRedisMetrics.getInstance().incrGetMetrics(connection.getClientName());
 		
 		return value;
 	}
@@ -141,6 +144,7 @@ class JedisStringCommands implements RedisStringCommands {
 	 * (non-Javadoc)
 	 * @see org.springframework.data.redis.connection.RedisStringCommands#setEx(byte[], long, byte[])
 	 */
+	@SuppressWarnings("deprecation")
 	@Override
 	public Boolean setEx(byte[] key, long seconds, byte[] value) {
 
