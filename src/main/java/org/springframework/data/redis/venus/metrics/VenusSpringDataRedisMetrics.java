@@ -1,7 +1,11 @@
 package org.springframework.data.redis.venus.metrics;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.data.redis.venus.consts.VenusSpringDataRedisConsts;
@@ -13,9 +17,7 @@ import com.google.gson.Gson;
 public class VenusSpringDataRedisMetrics {
 	private static VenusSpringDataRedisMetrics instance;
 	
-	private AtomicLong metricsGet = new AtomicLong(0);
-	
-	private String service;
+	private Map<String , AtomicLong> metrics = new ConcurrentHashMap<>();
 	
 	private Gson gson = new Gson();
 	
@@ -36,30 +38,34 @@ public class VenusSpringDataRedisMetrics {
 
 			@Override
 			public void run() {
-				VenusMetrics metrics = VenusSpringDataRedisMetrics.getInstance().switchMetrics();
-				if (metrics != null) {
-					System.out.println("上报Metrics:" + gson.toJson(metrics));
-				}
+				List<VenusMetrics> metrics = VenusSpringDataRedisMetrics.getInstance().switchMetrics();
+				
+				System.out.println("上报Metrics:" + gson.toJson(metrics));
 			}
 		}, VenusSpringDataRedisConsts.VENUS_JEDIS_POOL_METRICS_DELAY , VenusSpringDataRedisConsts.VENUS_JEDIS_POOL_METRICS_INTERVAL);
 	}
 	
-	public Long incrGetMetrics(String service) {
-		this.service = service;
-		
-		return metricsGet.incrementAndGet();
+	public Long incrGetMetrics(String clientName) {
+		AtomicLong counter = metrics.get(clientName);
+		if (counter != null) {
+			return counter.incrementAndGet();
+		} else {
+			metrics.put(clientName , new AtomicLong(1));
+			
+			return 1L;
+		}
 	}
 	
-	public VenusMetrics switchMetrics() {
-		if (service != null) {
-			VenusMetrics metrics = new VenusMetrics();
-			metrics.setCounter(metricsGet.getAndSet(0));
-			metrics.setHost(VenusAddressConvertor.getLocalIPList().get(0));
-			metrics.setServiceName(service);
+	public List<VenusMetrics> switchMetrics() {
+		List<VenusMetrics> metricsList = new ArrayList<>();
+		for (Map.Entry<String , AtomicLong> entry : metrics.entrySet()){
+			VenusMetrics venus = new VenusMetrics();
+			venus.setClientName(entry.getKey());
+			venus.setCounter(entry.getValue().getAndSet(0L));
+			venus.setHost(VenusAddressConvertor.getLocalIPList().get(0));
 			
-			return metrics;
-		} else {
-			return null;
+			metricsList.add(venus);
 		}
+		return metricsList;
 	}
 }
