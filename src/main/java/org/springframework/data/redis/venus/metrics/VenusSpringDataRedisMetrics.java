@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.data.redis.venus.consts.VenusSpringDataRedisConsts;
 import org.springframework.data.redis.venus.util.VenusAddressConvertor;
+import org.springframework.data.redis.venus.util.VenusHttpUtils;
 import org.springframework.data.redis.venus.vo.VenusMetrics;
 
 import com.google.gson.Gson;
@@ -33,6 +34,15 @@ public class VenusSpringDataRedisMetrics {
 		return instance;
 	}
 	
+	private String getVenusMetricsReportUrl() {
+		String url = System.getenv(VenusSpringDataRedisConsts.VENUS_JEDIS_METRICS_URL_PROD_EVN_VAR);
+		if (url == null) {
+			return VenusSpringDataRedisConsts.VENUS_JEDIS_METRICS_URL_TEST;
+		} else {
+			return url;
+		}
+	}
+	
 	private VenusSpringDataRedisMetrics() {
 		new Timer().scheduleAtFixedRate(new TimerTask() {
 
@@ -40,7 +50,7 @@ public class VenusSpringDataRedisMetrics {
 			public void run() {
 				List<VenusMetrics> metrics = VenusSpringDataRedisMetrics.getInstance().switchMetrics();
 				
-				System.out.println("上报Metrics:" + gson.toJson(metrics));
+				VenusHttpUtils.sendHttpPost(getVenusMetricsReportUrl(), gson.toJson(metrics));
 			}
 		}, VenusSpringDataRedisConsts.VENUS_JEDIS_POOL_METRICS_DELAY , VenusSpringDataRedisConsts.VENUS_JEDIS_POOL_METRICS_INTERVAL);
 	}
