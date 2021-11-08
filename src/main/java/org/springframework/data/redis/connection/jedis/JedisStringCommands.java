@@ -28,6 +28,8 @@ import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.connection.convert.Converters;
 import org.springframework.data.redis.core.types.Expiration;
+import org.springframework.data.redis.venus.cache.VenusJedisCustomizedCacheMgr;
+import org.springframework.data.redis.venus.consts.VenusSpringDataRedisConsts;
 import org.springframework.data.redis.venus.keys.VenusSlowKeys;
 import org.springframework.data.redis.venus.metrics.VenusSpringDataRedisMetrics;
 import org.springframework.lang.Nullable;
@@ -56,10 +58,19 @@ class JedisStringCommands implements RedisStringCommands {
 	public byte[] get(byte[] key) {
 
 		Assert.notNull(key, "Key must not be null!");
+		
+		String localValue = VenusJedisCustomizedCacheMgr.getInstance().get(new String(key));
+		if (localValue != null) {
+			return localValue.getBytes();
+		}
 
 		byte [] value = connection.invoke().just(BinaryJedis::get, MultiKeyPipelineBase::get, key);
 		if (value != null) {
 			VenusSlowKeys.getInstance().checkIfBigKeys(connection.getClientName() , new String(key) , value.length);
+			
+			if (value.length >= VenusSpringDataRedisConsts.DEFAULT_REDIS_BIG_KEY_SIZE) {
+				VenusJedisCustomizedCacheMgr.getInstance().put(new String(key) , new String(value));
+			}
 		}
 		
 		VenusSpringDataRedisMetrics.getInstance().incrGetMetrics(connection.getClientName());

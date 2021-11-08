@@ -19,4 +19,10 @@ public interface VenusSpringDataRedisConsts {
 	public static final String DISABLE_VENUS_SPRING_DATA_REDIS_SW = "DISABLE_VENUS_SPRING_DATA_REDIS";
 	
 	public static final Long DEFAULT_REDIS_BIG_KEY_SIZE = 5 * 1024 * 1024L;
+	
+	public static final Integer DEFAULT_SLOWKEYS_CACHE_SIZE = 128;
+	public static final Integer DEFAULT_MAX_SLOWKEYS_CACHE_SIZE = 1024;
+	public static final Integer DEFAULT_REFREASH_INTERVAL = 15;
+	
+	public static final String DEFAULT_JEDIS_SLOW_KEY_LOCAL_CACHE_VALUE = "DEFAULT-JEDIS-SLOW-KEY-LOCAL-CACHE-VALUE-";
 }
